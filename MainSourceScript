@@ -1,0 +1,127 @@
+-- Konfigurasi Auto-Press C
+local AUTO_C_ENABLED = true
+local MIN_FALL_DELAY = 0.008 -- 8ms
+local MAX_FALL_DELAY = 0.05  -- 50ms
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Variables
+local lastPressTime = 0
+local COOLDOWN = 0.8
+
+-- Function untuk press C (compatible dengan Xeno)
+local function pressC()
+    local success = pcall(function()
+        local vim = game:GetService("VirtualInputManager")
+        vim:SendKeyEvent(true, "C", false, game)
+        wait(0.02)
+        vim:SendKeyEvent(false, "C", false, game)
+    end)
+    
+    if not success then
+        -- Backup method untuk Xeno
+        pcall(function()
+            game:GetService("VirtualUser"):TypeKey("C")
+        end)
+    end
+end
+
+-- Random delay
+local function getRandomDelay()
+    return MIN_FALL_DELAY + (math.random() * (MAX_FALL_DELAY - MIN_FALL_DELAY))
+end
+
+-- Setup fall detection
+local function setupFallDetection(char)
+    spawn(function()
+        wait(0.5)
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum then return end
+        
+        hum.StateChanged:Connect(function(old, new)
+            if not AUTO_C_ENABLED then return end
+            
+            if new == Enum.HumanoidStateType.Freefall then
+                local now = tick()
+                if now - lastPressTime >= COOLDOWN then
+                    lastPressTime = now
+                    
+                    spawn(function()
+                        local delay = getRandomDelay()
+                        wait(delay)
+                        
+                        if hum and hum.Health > 0 and hum:GetState() == Enum.HumanoidStateType.Freefall then
+                            pressC()
+                            game.StarterGui:SetCore("SendNotification", {
+                                Title = "Auto-C Activated";
+                                Text = "Pressed C with " .. math.floor(delay * 1000) .. "ms delay";
+                                Duration = 2;
+                            })
+                        end
+                    end)
+                end
+            end
+        end)
+    end)
+end
+
+-- Initial setup
+if LocalPlayer.Character then
+    setupFallDetection(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    wait(0.3)
+    setupFallDetection(char)
+end)
+
+-- Script asli kamu --
+
+local vu = game:GetService("VirtualUser")
+game:GetService("Players").LocalPlayer.Idled:connect(function()
+    vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    wait(1)
+    vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
+
+game.StarterGui:SetCore("SendNotification", {
+    Title = "made by JN HH Gaming";
+    Text = "Script loaded successfully";
+    Duration = 3;
+})
+
+wait(1)
+
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Recording now";
+    Text = "Press F2 3 times to save recording";
+    Duration = 60;
+})
+
+_G.HeadSize = 10
+_G.Disabled = true
+
+game:GetService('RunService').RenderStepped:connect(function()
+    if _G.Disabled then
+        for i,v in next, game:GetService('Players'):GetPlayers() do
+            if v.Name ~= game:GetService('Players').LocalPlayer.Name then
+                pcall(function()
+                    v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize,_G.HeadSize,_G.HeadSize)
+                    v.Character.HumanoidRootPart.Transparency = 0.45
+                    v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really black")
+                    v.Character.HumanoidRootPart.Material = "Neon"
+                    v.Character.HumanoidRootPart.CanCollide = false
+                end)
+            end
+        end
+    end
+end)
+
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Auto-C System";
+    Text = "Random delay 8-50ms | Status: Active";
+    Duration = 5;
+})
